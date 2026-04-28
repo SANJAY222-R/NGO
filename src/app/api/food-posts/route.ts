@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth"; // We can use the root auth since it's aliased via tsconfig? Wait, I moved auth.ts to src/auth.ts and changed nothing about aliasing. Actually, let's use relative or "@/auth". Wait, I'll use "../../auth". Wait, it's inside `src/app/api/food-posts/route.ts`, so from here `auth.ts` is `../../../auth`.
-import { auth as nextAuth } from "../../../auth";
-import { FoodPost } from "../../../models";
-import { foodPostSchema } from "../../../lib/validations";
+import { auth } from "@/auth";
+import { FoodPost } from "@/models";
+import { foodPostSchema } from "@/lib/validations";
 
 export async function GET(request: Request) {
   try {
-    const session = await nextAuth();
+    const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -18,6 +17,10 @@ export async function GET(request: Request) {
     const whereClause: any = {};
     if (status) {
       whereClause.status = status;
+    }
+
+    if (session.user.role === "DONOR") {
+      whereClause.donorId = session.user.id;
     }
 
     const posts = await FoodPost.findAll({
@@ -34,7 +37,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await nextAuth();
+    const session = await auth();
     if (!session?.user || session.user.role !== "DONOR") {
       return NextResponse.json({ error: "Forbidden: Only donors can create posts" }, { status: 403 });
     }

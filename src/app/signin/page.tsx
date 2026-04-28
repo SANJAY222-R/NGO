@@ -32,7 +32,7 @@ export default function SignInPage() {
       }
 
       // Automatically redirect to the correct dashboard upon successful login
-      router.push("/donor");
+      router.push("/dashboard");
       router.refresh();
     } catch (err: any) {
       setError(err.message);

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { auth as nextAuth } from "../../../auth";
-import { Claim, FoodPost } from "../../../models";
-import { claimSchema } from "../../../lib/validations";
-import { sequelize } from "../../../lib/sequelize";
+import { auth as nextAuth } from "@/auth";
+import { Claim, FoodPost } from "@/models";
+import { claimSchema } from "@/lib/validations";
+import { sequelize } from "@/lib/sequelize";
 
 export async function GET(request: Request) {
   try {

@@ -2,8 +2,10 @@ import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { sequelize } from "./lib/sequelize"
 import { User } from "./models"
+import { authConfig } from "./auth.config"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -30,25 +32,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         };
       }
     })
-  ],
-  session: { strategy: "jwt" },
-  pages: {
-    signIn: "/signin",
-  },
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = (user as any).role || "DONOR";
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user && token) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
-      }
-      return session;
-    }
-  }
+  ]
 })
