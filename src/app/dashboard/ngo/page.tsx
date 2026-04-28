@@ -7,8 +7,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { MapPin, Clock, Package, CheckSquare } from "lucide-react";
 
-const MapComponent = dynamic(() => import("@/components/MapComponent"), { ssr: false });
-
 export default function NgoDashboard() {
   const [posts, setPosts] = useState<any[]>([]);
   const [myClaims, setMyClaims] = useState<any[]>([]);
@@ -96,7 +94,7 @@ export default function NgoDashboard() {
             className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === "FEED" ? "bg-white dark:bg-zinc-700 shadow-sm text-zinc-900 dark:text-white" : "text-zinc-500 hover:text-zinc-700"}`}
             onClick={() => setActiveTab("FEED")}
           >
-            Live Feed & Map
+            Donation Feed
           </button>
           <button 
             className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === "CLAIMS" ? "bg-white dark:bg-zinc-700 shadow-sm text-zinc-900 dark:text-white" : "text-zinc-500 hover:text-zinc-700"}`}
@@ -113,11 +111,6 @@ export default function NgoDashboard() {
         </div>
       ) : activeTab === "FEED" ? (
         <div className="space-y-8">
-          <div className="w-full bg-white dark:bg-zinc-900 p-2 rounded-xl shadow-lg border">
-            {/* The Interactive Map */}
-            <MapComponent posts={posts} onClaim={handleClaim} />
-          </div>
-
           <div>
             <h3 className="text-xl font-bold mb-4">Available Donations ({posts.length})</h3>
             {posts.length === 0 ? (

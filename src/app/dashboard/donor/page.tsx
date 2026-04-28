@@ -12,13 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Clock, History, MapPin } from "lucide-react";
 
-// Dynamically import LocationPicker to disable SSR (Leaflet requires window)
-const LocationPicker = dynamic(() => import("@/components/LocationPicker"), { ssr: false });
-
 export default function DonorDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [position, setPosition] = useState<[number, number] | null>(null);
   const [history, setHistory] = useState<any[]>([]);
 
   const fetchHistory = async () => {
@@ -44,13 +40,11 @@ export default function DonorDashboard() {
     
     const data = {
       title: formData.get("title"),
-      description: formData.get("description"),
+      description: formData.get("description") + (formData.get("pickupInstructions") ? `\n\nPickup Instructions: ${formData.get("pickupInstructions")}` : ""),
       quantity: formData.get("quantity"),
       foodType: formData.get("foodType"),
       expiryDate: formData.get("expiryDate"),
       address: formData.get("address"),
-      latitude: position ? position[0] : undefined,
-      longitude: position ? position[1] : undefined,
     };
 
     try {
@@ -67,7 +61,6 @@ export default function DonorDashboard() {
 
       toast.success("Food Post created successfully!");
       form.reset();
-      setPosition(null);
       fetchHistory(); // Refresh history
       router.refresh();
     } catch (error: any) {
@@ -134,13 +127,13 @@ export default function DonorDashboard() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Exact Pickup Location (Optional but helpful)</Label>
-                  <LocationPicker position={position} setPosition={setPosition} />
+                  <Label htmlFor="address">Pickup Address</Label>
+                  <Input id="address" name="address" placeholder="123 Main St, City" required className="bg-white dark:bg-zinc-800" />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="address">Pickup Address</Label>
-                  <Input id="address" name="address" placeholder="123 Main St, City" required className="bg-white dark:bg-zinc-800" />
+                  <Label htmlFor="pickupInstructions">Detailed Pickup Instructions</Label>
+                  <Input id="pickupInstructions" name="pickupInstructions" placeholder="e.g. Leave at front desk, use side entrance..." className="bg-white dark:bg-zinc-800" />
                 </div>
 
                 <Button type="submit" className="w-full h-12 text-lg bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white" disabled={loading}>
