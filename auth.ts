@@ -1,50 +1,87 @@
 import NextAuth from "next-auth"
-import GitHub from "next-auth/providers/github"
-import LinkedIn from "next-auth/providers/linkedin"
 import CredentialsProvider from "next-auth/providers/credentials"
 import SequelizeAdapter from "@auth/sequelize-adapter"
-import { sequelize } from "./src/lib/sequelize"
-import { User, Account, Session, VerificationToken } from "./src/models"
+import bcrypt from "bcryptjs"
+
+import { sequelize } from "@/lib/sequelize"
+import { User } from "@/models"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: SequelizeAdapter(sequelize, {
-    models: {
-      User: User as any,
-      Account: Account as any,
-      Session: Session as any,
-      VerificationToken: VerificationToken as any,
-    },
-  }),
+  adapter: SequelizeAdapter(sequelize),
+
+  session: {
+    strategy: "jwt",
+  },
+
   providers: [
-    GitHub({
-      clientId: process.env.AUTH_GITHUB_ID as string,
-      clientSecret: process.env.AUTH_GITHUB_SECRET as string,
-    }),
-    LinkedIn({
-      clientId: process.env.AUTH_LINKEDIN_ID as string,
-      clientSecret: process.env.AUTH_LINKEDIN_SECRET as string,
-    }),
     CredentialsProvider({
       name: "Credentials",
+
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        email: {
+          label: "Email",
+          type: "email",
+        },
+
+        password: {
+          label: "Password",
+          type: "password",
+        },
       },
+
       async authorize(credentials) {
-        if (credentials?.email === "admin@example.com" && credentials?.password === "password") {
-          return { id: "1", name: "Admin", email: "admin@example.com" }
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Missing email or password")
         }
-        return null
-      }
-    })
+
+        const user = await User.findOne({
+          where: {
+            email: credentials.email,
+          },
+        })
+
+        if (!user) {
+          throw new Error("User not found")
+        }
+
+        const isPasswordValid = await bcrypt.compare(
+          credentials.password as string,
+          user.getDataValue("password")
+        )
+
+        if (!isPasswordValid) {
+          throw new Error("Invalid password")
+        }
+
+        return {
+          id: user.getDataValue("id"),
+          email: user.getDataValue("email"),
+          name: user.getDataValue("name"),
+          image: user.getDataValue("image"),
+          role: user.getDataValue("role"),
+        }
+      },
+    }),
   ],
+
   callbacks: {
-    async session({ session, user }) {
-      if (session.user && user) {
-        // @ts-ignore
-        session.user.role = user.role
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = (user as any).role
       }
+
+      return token
+    },
+
+    async session({ session, token }) {
+      if (session.user) {
+        ;(session.user as any).id = token.sub
+        ;(session.user as any).role = token.role
+      }
+
       return session
-    }
-  }
+    },
+  },
+
+  secret: process.env.AUTH_SECRET,
 })
